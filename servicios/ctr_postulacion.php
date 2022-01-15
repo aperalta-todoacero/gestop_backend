@@ -620,11 +620,15 @@ try{
 
 														preg_match_all("/(^\d+).*(\.\w+)$/", $entrada, $e );
 
-														$id = $e[1][0];
-														$ext = $e[2][0];
+														if( isset($e[1][0]) && isset($e[2][0]) ){
+															
+																$id = $e[1][0];
+																$ext = $e[2][0];
 
-														if( is_numeric( $id ))
-																array_push( $documentos_encontrados, $id );														
+																if( is_numeric( $id ))
+																		array_push( $documentos_encontrados, $id );	
+														}
+																												
 												}
 										}
  
@@ -638,6 +642,82 @@ try{
 
 								if( ! $id = $Postulante->postular( $rocp_id ) )
 										throw new Exception('Ocurrio un error al confirmar la postulacion', 1);
+
+								/***** correos****/
+								
+								$postulaciones = $Postulante->getListaPostulaciones($rocp_id);
+
+								$cargo = $postulaciones[0]['perfil_nombre'];
+
+								$nombre = $Postulante->getNombre().' '.$Postulante->getApaterno().' '.$Postulante->getAmaterno();
+
+								$correos = $Postulante->getListaCorreosInteresadosPostulacion( $rocp_id );
+	
+				
+								$body ="Estimado,<br><br> 
+										<strong>".$nombre."</strong> se ha registrado como postulante para el cargo de <strong>".$cargo."</strong>" 
+										."<br><br>Saludos cordiales.";
+
+								
+								$tabla ="<table style='width:700px; border:0; padding:5px 10px '>";
+								$tabla .="<tr>";
+								$tabla .="<td align='center'>";
+								$tabla .="<img src='https://todoacero.cl/images/logo.jpg'/>";
+								$tabla .="</td>";
+								$tabla .="</tr>";
+								$tabla .="<tr>";
+								$tabla .="<td><p>";
+								$tabla .=$body;
+								$tabla .="</p></td></tr>";
+								$tabla .="</table>";
+								
+								$mail = new PHPMailer(TRUE);
+								
+								$subject = "Solicitud de reclutamiento";
+								
+								$mail->setFrom('gestop@todoacero.cl', 'SISTEMA DE POSTULACION' );
+
+								
+								foreach( (array)$correos as $c ){
+									
+										switch($c['tipo']){
+
+												case 'PARA':
+														
+														$mail->addAddress($c['correo'], '');
+										
+												break;
+
+												case 'CC':
+
+														$mail->addCC($c['correo'], '');
+
+												break;
+
+												case 'BCC':
+
+														$mail->addBCC($c['correo'], '');
+
+												break;
+
+												default:
+								
+														$mail->addAddress($c['correo'], '');
+										
+												break;
+										
+										}
+
+								}
+						
+								$mail->isHTML(true);
+								$mail->Subject = $subject;
+								$mail->Body = utf8_decode($tabla);
+								$mail->send();
+						
+
+				/****fin correo*****/
+
 
 								$resp['mensaje'] ="La postulación ha sido confirmada con el folio ".$id;
 

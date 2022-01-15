@@ -42,6 +42,8 @@ class Rec_Perfil_Evaluado extends Rec_Perfil
 
 		private $oferta_id;
 
+		private $nro_contrato;
+
 		public function __construct(){
 
 				$this->competencias = array();
@@ -102,6 +104,10 @@ class Rec_Perfil_Evaluado extends Rec_Perfil
 
 		public function getOfertaId(){
 				return $this->oferta_id;
+		}
+
+		public function getNroContrato(){
+				return $this->nro_contrato;
 		}
 
 		public function getCalculoPuntaje(){
@@ -173,7 +179,11 @@ class Rec_Perfil_Evaluado extends Rec_Perfil
 		public function setOfertaId( $id ){
 				$this->oferta_id = $id;
 		}
-		
+	
+		public function setNroContrato( $nro_contrato ){
+				$this->nro_contrato = $nro_contrato;
+		}	
+
 		public function setCompetencias( ){
 
 			if( !empty( $this->getId() ) ){

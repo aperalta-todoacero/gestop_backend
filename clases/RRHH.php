@@ -809,6 +809,158 @@ class RRHH extends Usuario implements iLogin
 		}
 
 
+	public function crearImagenOfertaIndividual2( $faena='', $turno='', $cargo ='', $competencias = array() ){
+				
+			$dir = __DIR__."/../servicios/imagenes";
+
+			$imagen_dir = __DIR__."/../servicios/imagenes/publicacion_tipo_3.png";
+			
+			$fuente_dir_bold = __DIR__."/../servicios/imagenes/LiberationSans-Bold.ttf";
+			
+			$fuente_dir_regular = __DIR__."/../servicios/imagenes/LiberationSans-Regular.ttf";
+
+				
+			$imagen = imagecreatefrompng ($imagen_dir);
+			
+			$imagen_tamano = getimagesize($imagen_dir);
+			
+			$w_imagen = imagesx($imagen);
+
+			
+			$color_blanco = imagecolorallocate ($imagen, 255, 255, 255);
+			
+			$color_gris = imagecolorallocate ($imagen, 177, 177, 177);
+			
+			$color = imagecolorallocate ($imagen, 0, 0, 0);
+			
+			$h_texto = 30;
+			
+			$angulo = 0;
+	
+			$lineas = $this->getLineas( strtoupper($cargo), $h_texto, $fuente_dir_bold , $w_imagen, $mi = 20, $md = 60,  $angulo = 0);
+
+		
+			$x = 20;
+
+			
+			if(  count($lineas)==1 ){
+				
+					$h_texto = 30;
+					
+					$y = 590;
+		
+			}else{
+		
+					$y = 575;
+				
+					$h_texto = 17;
+
+			}
+
+			
+			$lineas = $this->getLineas( strtoupper($cargo), $h_texto, $fuente_dir_bold , $w_imagen, $mi, $md, $angulo = 0);
+
+			$i=0;
+
+	
+			foreach($lineas as $linea){
+						
+					$coordenadas = imagettfbbox($h_texto, $angulo,$fuente_dir_bold, $linea );
+						
+					$y += abs($coordenadas[7] - $coordenadas[1]);
+
+					if($i>0)
+
+							$y+= 10;
+						
+					imagettftext($imagen, $h_texto, $angulo, $x+$mi , $y , $color_blanco ,$fuente_dir_bold , $linea );
+				
+					$i++;
+	
+			}
+
+			unset($linea);
+	
+			imagettftext($imagen, $h_texto=17, $angulo, $x = 280 , $y = 674 , $color ,$fuente_dir_bold , $faena.', '.$turno );
+
+		
+			$compt_tmp = $competencias;
+
+			
+			//$ultimo = array_pop($compt_tmp);
+			
+			$comp = implode(" - ", $compt_tmp);
+
+			
+			$txt = $comp;
+
+			
+			$lineas = $this->getLineas( $txt, $h_texto = 17, $fuente_dir_regular , $w_imagen, $mi = 15, $md = 45,  $angulo = 0);
+
+			$lineas = ( count($lineas)>5)? array_slice($lineas,0,5) : $lineas ;
+			/*
+			if( count($lineas) > 5 ){
+
+					
+
+					$ultimo = array_pop($compt_tmp);
+					
+					$comp = implode(", ", $compt_tmp).' y '.$ultimo;
+					
+					$txt = $comp;
+				
+					$lineas = $this->getLineas( $txt, $h_texto = 17, $fuente_dir_regular , $w_imagen, $mi = 15, $md = 45,  $angulo = 0);
+		
+			}*/
+
+			$y = 700;
+
+			$x = 10 + $mi;
+
+			$i=0;
+
+			$contador = count($lineas) -1;
+	
+			foreach($lineas as $linea){
+
+					if($contador===$i)
+							$l = rtrim($linea, ' - ');
+					else
+							$l=$linea;
+
+					$coordenadas = imagettfbbox($h_texto, $angulo,$fuente_dir_regular, $l );
+
+					$y += abs($coordenadas[7] - $coordenadas[1]);
+
+					$y+= 7;
+
+					imagettftext($imagen, $h_texto, $angulo, $x , $y , $color_blanco ,$fuente_dir_regular , $l );
+
+					$i++;
+	
+			}
+		
+			unset($linea);
+
+			unset($comp);
+			
+			#footer
+			
+			imagettftext($imagen, $tamano = 16, $angulo, $x=100, $y=890, $color_gris,$fuente_dir_regular,$texto="Interesados, postular en nuestra plataforma");
+			
+			imagettftext($imagen, $tamano=17, $angulo, $x=100, $y+=25, $color,$fuente_dir_bold,$texto="reclutamiento.todoacero.cl");
+			
+			$nombre_img = 'img_oferta_'.rand().''.time().'.png';
+			
+			imagepng ($imagen, $dir.'/'.$nombre_img );
+			
+			imagedestroy($imagen);
+
+			return $nombre_img;
+
+	}
+
+
 	private function getLineas( $texto, $h_texto, $fuente , $w_imagen, $ml = 0, $mi = 0,  $angulo = 0){
 
 		$w = $w_imagen - $ml - $mi;

@@ -940,7 +940,8 @@ public function getPerfilesCargo( $perfil_id = null ){
 									$perfil->getFaena(),//faena
 									$perfil->getArea(),//area
 									$perfil->getFechaReq(),//fecha
-									$perfil->getSueldo(),//fecha
+									$perfil->getSueldo(),
+									$perfil->getNroContrato(),
 								  $perfil->getEvaluadorUsrId()
 							);
 
@@ -1037,11 +1038,12 @@ public function getPerfilesCargo( $perfil_id = null ){
 							$perfil->setFaenaNombre( $l['FAENA_NOMBRE']);
 							$perfil->setAreaNombre( $l['AREA_NOMBRE']);
 							$perfil->setSolicitanteNombre( $l['SOLICITANTE_NOMBRE']);
+							$perfil->setNroContrato( $l['NRO_CONTRATO']);
 								
 
 							return $perfil;
 
-					}, $lista);
+					}, (array)$lista);
 
 			
 			return $perfiles;
@@ -1111,6 +1113,8 @@ public function getPerfilesCargo( $perfil_id = null ){
 							'covid_result_desc'=> isset($l['COVID_RESULT_DESC'])? $l['COVID_RESULT_DESC']:null,
 							'covid_exam_fecha'=> isset($l['COVID_EXAM_FECHA'])? $l['COVID_EXAM_FECHA']:null,
 							'documentos_validados'=> isset($l['DOCUMENTOS_VALIDADOS'])? $l['DOCUMENTOS_VALIDADOS']:null,
+							'sueldo'=> isset($l['SUELDO'])? $l['SUELDO']:null,
+							'nro_contrato'=> isset($l['NRO_CONTRATO'])? $l['NRO_CONTRATO']:null,
 							);
 					}, (array)$lista);
 			return $postulantes;
@@ -1326,6 +1330,95 @@ public function getPerfilesCargo( $perfil_id = null ){
 			);
 	
 	}
+
+
+	public function getListaCorreoReclutamientoSolicitud(){
+
+			$lista = $this->datos->getListaCorreoProceso('RECLUTAMIENTO_SOLICITUD');
+
+			return array_map(
+					function($c){
+
+							return array(
+									'correo' => $c['CORREO'],
+									'tipo' => $c['TIPO']
+							);
+					
+					}, $lista
+			);
+	
+	}
+
+	public function getListaCorreoReclutamientoSolicitudValidacion(){
+
+			$lista = $this->datos->getListaCorreoProceso('RECLUTAMIENTO_SOLICITUD_VALIDACION');
+
+			return array_map(
+					function($c){
+
+							return array(
+									'correo' => $c['CORREO'],
+									'tipo' => $c['TIPO']
+							);
+					
+					}, $lista
+			);
+	
+	}
+
+	public function getListaCorreoPostulanteApruebaEntrevistaTecnica(){
+
+			$lista = $this->datos->getListaCorreoProceso('POSTULANTE_APRUEBA_E_TECNICA');
+
+			return array_map(
+					function($c){
+
+							return array(
+									'correo' => $c['CORREO'],
+									'tipo' => $c['TIPO']
+							);
+					
+					}, $lista
+			);
+	
+	}
+
+	public function getListaCorreoPostulanteApruebaExamenPreocupacional(){
+
+			$lista = $this->datos->getListaCorreoProceso('POSTULANTE_APRUEBA_EX_PREOCUPACIONAL');
+
+			return array_map(
+					function($c){
+
+							return array(
+									'correo' => $c['CORREO'],
+									'tipo' => $c['TIPO']
+							);
+					
+					}, $lista
+			);
+	
+	}
+
+	public function getListaCorreoPostulanteApruebaContrato(){
+
+			$lista = $this->datos->getListaCorreoProceso('POSTULANTE_APRUEBA_CONTRATACION');
+
+			return array_map(
+					function($c){
+
+							return array(
+									'correo' => $c['CORREO'],
+									'tipo' => $c['TIPO']
+							);
+					
+					}, $lista
+			);
+	
+	}
+
+
+
 
 
 
@@ -1799,7 +1892,8 @@ public function getPerfilesCargo( $perfil_id = null ){
 						$pdf->Cell(25, 10, 'RUT' ,0 , 0, $align = 'L', $fill = false);
 						$pdf->Cell(55, 10, 'NOMBRE',0 , 0, $align = 'L', $fill = false);
 						$pdf->Cell(25, 10, 'TELEFONO' ,0 , 0, $align = 'L', $fill = false);
-						$pdf->Cell(32, 10, 'COMUNA' ,0 , 0, $align = 'L', $fill = false);
+						//$pdf->Cell(32, 10, 'COMUNA' ,0 , 0, $align = 'L', $fill = false);
+						$pdf->Cell(32, 10, 'PASE MOV.' ,0 , 0, $align = 'L', $fill = false);
 						$pdf->Cell(0, 10, 'CARGO' ,0 , 0, $align = 'L', $fill = false);
 
 						$pdf->Ln();
@@ -1824,6 +1918,14 @@ public function getPerfilesCargo( $perfil_id = null ){
 								$cargo= ucfirst( strtolower( $l['CARGO']));
 								$turno = $l['TURNO'];
 								$validacion = $l['PTD_VALIDACION_APP'];
+								
+								$pase_movilidad = '';
+
+								switch( $l['PTD_PASE_MOVILIDAD_HABILITADO']){
+										case -1: $pase_movilidad = 'NO PRESENTA'; break;
+										case 0: $pase_movilidad = 'NO HABILITADO';  break;
+										case 1: $pase_movilidad = 'HABILITADO';  break;
+								}
 
 								$pdf->Cell(25, 0, $rut ,0 , 0, $align = 'L', $fill = false);
 								$x = $pdf->getX();
@@ -1831,7 +1933,8 @@ public function getPerfilesCargo( $perfil_id = null ){
 								$pdf->MultiCell(55, 0, $nombre, 0, 'L', 0, 0, $x, '', true );
 								$y1 = $pdf->getY();
 								$pdf->Cell(25, 0, $telefono ,0 , 0, $align = 'L', $fill = false);
-								$pdf->Cell(32, 0, $comuna ,0 , 0, $align = 'L', $fill = false);
+								//$pdf->Cell(32, 0, $comuna ,0 , 0, $align = 'L', $fill = false);
+								$pdf->Cell(32, 0, $pase_movilidad ,0 , 0, $align = 'L', $fill = false);
 								$x = $pdf->getX();
 								$pdf->setY($y1);
 								$pdf->MultiCell(0, 0, $cargo, 0, 'L', 0, 0, $x, '', true );

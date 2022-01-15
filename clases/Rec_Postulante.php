@@ -1206,6 +1206,40 @@ class Rec_Postulante
 			);
 	
 	}
+	
+	public function getListaCorreosInteresadosPostulacion($rocp_id){
+
+			$lista = $this->datos->getPostulacionCorreosInteresados($rocp_id);
+
+			if(empty($lista))
+			
+					return array();
+
+			$lista = $lista[0];
+
+			$correos = array();
+
+			if( !empty( $lista['CORREO_EVALUADOR'] ) )
+					array_push($correos, array( 
+							'correo' =>$lista['CORREO_EVALUADOR'],
+							'tipo' => ''
+					));
+
+			if( !empty( $lista['CORREO_SOLICITANTE'] ) )
+					array_push($correos, array( 
+							'correo' =>$lista['CORREO_SOLICITANTE'],
+							'tipo' => ''
+					));
+	
+			if( !empty( $lista['CORREO_RRHH'] ) )
+					array_push($correos, array( 
+							'correo' =>$lista['CORREO_RRHH'],
+							'tipo' => ''
+					));
+
+			return $correos;
+
+	}
 	/*
 	public function getCantidadDocumentosInvalidos( $rocp_id ){
 			

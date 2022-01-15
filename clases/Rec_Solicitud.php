@@ -177,6 +177,7 @@ class Rec_Solicitud
 							$perfil->setSueldo( $p['SUELDO'] );
 							$perfil->setEvaluadorUsrId( $p['EVALUADOR_USR_ID'] );
 							$perfil->setEvaluadorNombre( $p['EVALUADOR_NOMBRE'] );
+							$perfil->setNroContrato( $p['NRO_CONTRATO'] );
 							
 							$perfil->setDocumentos();
 							$perfil->setCompetencias();

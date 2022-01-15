@@ -226,13 +226,16 @@ curl_close($ch);
 var_dump($output);
  */
 
-$cargos = array('ingeniero comercial','maestro segunda calderero','ingeniero en gestion de prevencion de riesgos con mencion en gestion de personal y manejo de grua','profesor de educaion basica');
+$cargos = array('ingeniero comercial','maestro segunda calderero','ingeniero en gestion de prevencion de riesgos','profesor de educaion basica');
 $competencias = array('competencia 1','competencia 2','competencia 3','competencia 4','competencia 5','competencia 6','competencia 7','competencia 8','competencia 9','competencia 10','competencia 11','competencia 12','competencia 13','competencia 14','competencia 15');
 
 $descripcion = "Esta es la descripcion principal para testear la separacion de las lineas si un texto es muy extenso.";
 $descripcion = ucfirst(strtolower($descripcion));
 
-$imagen_dir = __DIR__."/imagenes/publicacion_tipo_1.png";
+$faena= "maestranza";
+$turno= "4x4";
+
+$imagen_dir = __DIR__."/imagenes/publicacion_tipo_3.png";
 $fuente_dir_bold = __DIR__."/imagenes/LiberationSans-Bold.ttf";
 $fuente_dir_regular = __DIR__."/imagenes/LiberationSans-Regular.ttf";
 
@@ -245,75 +248,34 @@ $w_imagen = imagesx($imagen);
 $color_blanco = imagecolorallocate ($imagen, 255, 255, 255);
 $color_gris = imagecolorallocate ($imagen, 177, 177, 177);
 $color = imagecolorallocate ($imagen, 0, 0, 0);
-$tamano =20;
-$h_texto = 20;
+$h_texto = 30;
 $angulo = 0;
-
-$x = 100;
-$y = 210;
 
 
 #descripcion o texto principal
 
-$y+=50;
 
-$lineas = getLineas( $descripcion, $h_texto, $fuente_dir_regular , $w_imagen, $ml = 100, $mi = 100,  $angulo = 0);
+		$lineas = getLineas( strtoupper($cargos[2]), $h_texto, $fuente_dir_bold , $w_imagen, $mi = 20, $md = 60,  $angulo = 0);
 
-$i=0;
+		$x = 20;
 
-foreach($lineas as $linea){
+		if(  count($lineas)==1 ){
+	
+				$h_texto = 30;
+
+				$y = 590;
 		
-		if( $i > 0 )
-				$y+=30;
+			}else{
 		
-		$coordenadas = imagettfbbox($h_texto, $angulo,$fuente_dir_regular,$linea );
-						
-		$x = ($w_imagen / 2.0 ) - ( $coordenadas[4]/2.0 );
-
-		imagettftext($imagen, $h_texto, $angulo, $x , $y , $color_blanco , $fuente_dir_regular , $linea );
-
-		$i++;
-}
-
-$y+=50;
-
-
-if($simple){
-
-		
-		foreach($cargos as $cargo){
+				$y = 575;
 				
-				$txt = $cargo;
+				$h_texto = 17;
 
-				$lineas = getLineas( $txt, $h_texto, $fuente_dir_bold , $w_imagen, $ml = 100, $mi = 100,  $angulo = 0);
+			}
 
-				$i=0;
+		//$h_texto = ($multiline===true)? 17 : $h_texto;
 
-				foreach($lineas as $linea){
-						
-						$coordenadas = imagettfbbox($h_texto, $angulo,$fuente_dir_bold, $linea );
-						
-						$x = ($w_imagen / 2.0 ) - ( $coordenadas[4]/2.0 );
-						
-						$y += abs($coordenadas[7] - $coordenadas[1]);
-
-						$y+= ( $i > 0 ) ? 10 : 30;
-
-						imagettftext($imagen, $h_texto, $angulo, $x , $y , $color_blanco ,$fuente_dir_bold , $linea );
-				
-						$i++;
-
-				}
-
-				unset($linea);
-
-		}
-
-		unset($cargo);
-
-}else{
-
-		$lineas = getLineas( $cargos[1], $h_texto = 50, $fuente_dir_bold , $w_imagen, $ml = 100, $mi = 100,  $angulo = 0);
+		$lineas = getLineas( strtoupper($cargos[2]), $h_texto, $fuente_dir_bold , $w_imagen, $mi, $md, $angulo = 0);
 
 		$i=0;
 
@@ -321,13 +283,12 @@ if($simple){
 						
 						$coordenadas = imagettfbbox($h_texto, $angulo,$fuente_dir_bold, $linea );
 						
-						$x = ($w_imagen / 2.0 ) - ( $coordenadas[4]/2.0 );
-						
 						$y += abs($coordenadas[7] - $coordenadas[1]);
 
-						$y+= ( $i > 0 ) ? 10 : 30;
-
-						imagettftext($imagen, $h_texto, $angulo, $x , $y , $color_blanco ,$fuente_dir_bold , $linea );
+						if($i>0)
+								$y+= 10;
+						
+						imagettftext($imagen, $h_texto, $angulo, $x+$mi , $y , $color_blanco ,$fuente_dir_bold , $linea );
 				
 						$i++;
 
@@ -335,44 +296,61 @@ if($simple){
 
 		unset($linea);
 		
-		$ultimo = array_pop($competencias);
-		$comp = implode(", ", $competencias).' y '.$ultimo;
+		
+		imagettftext($imagen, $h_texto=17, $angulo, $x = 280 , $y = 674 , $color ,$fuente_dir_bold , $faena.', '.$turno );
+
+		$compt_tmp = $competencias;
+
+		$ultimo = array_pop($compt_tmp);
+		$comp = implode(", ", $compt_tmp).' y '.$ultimo;
 
 		$txt = $comp;
 
-		$lineas = getLineas( $txt, $h_texto = 20, $fuente_dir_regular , $w_imagen, $ml = 100, $mi = 100,  $angulo = 0);
+		$lineas = getLineas( $txt, $h_texto = 17, $fuente_dir_regular , $w_imagen, $mi = 15, $md = 45,  $angulo = 0);
+		
+		if( count($lineas) > 5 ){
+	
+				$ultimo = array_pop($compt_tmp);
+			
+				$comp = implode(", ", $compt_tmp).' y '.$ultimo;
+
+				
+				$txt = $comp;
+
+				
+				$lineas = getLineas( $txt, $h_texto = 17, $fuente_dir_regular , $w_imagen, $mi = 15, $md = 45,  $angulo = 0);
+		
+		}
+
+		$y = 700;
+
+		$x = 10 + $mi;
 
 		$i=0;
 
 		foreach($lineas as $linea){
 						
-						$coordenadas = imagettfbbox($h_texto, $angulo,$fuente_dir_bold, $linea );
-						
-						$x = ($w_imagen / 2.0 ) - ( $coordenadas[4]/2.0 );
+						$coordenadas = imagettfbbox($h_texto, $angulo,$fuente_dir_regular, $linea );
 						
 						$y += abs($coordenadas[7] - $coordenadas[1]);
 
-						$y+= ( $i > 0 ) ? 10 : 30;
+						$y+= 7;
 
-						imagettftext($imagen, $h_texto, $angulo, $x , $y , $color_blanco ,$fuente_dir_bold , $linea );
+						imagettftext($imagen, $h_texto, $angulo, $x , $y , $color_blanco ,$fuente_dir_regular , $linea );
 				
 						$i++;
 
 		}
-
 
 		unset($linea);
 
 		unset($comp);
 
 
-}
-
-
 #footer
-imagettftext($imagen, $tamano, $angulo, $x=320, $y=1160, $color_gris,$fuente_dir_regular,$texto="Interesados, postular en nuestra plataforma");
+imagettftext($imagen, $tamano = 16, $angulo, $x=100, $y=890, $color_gris,$fuente_dir_regular,$texto="Interesados, postular en nuestra plataforma");
 
-imagettftext($imagen, $tamano, $angulo, $x=520, $y+=50, $color_blanco,$fuente_dir_regular,$texto="reclutamiento.todoacero.cl");
+imagettftext($imagen, $tamano=20, $angulo, $x=100, $y+=25, $color,$fuente_dir_bold,$texto="reclutamiento.todoacero.cl");
 
 header ("Content-type: image/png");
 imagepng ($imagen);

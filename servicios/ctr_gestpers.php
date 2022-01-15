@@ -590,8 +590,21 @@ try{
 				$urgente = $post->urgente === true;//falta limpiar string
 
 				$solicitud->setDescripcion( $obs );
+
+				$tr ="";
 				
+				$i=0;
+
 				foreach( $post->solicitudes as $sol){ //deberian ser perfiles dentro de la solicitud
+
+						
+						$color= $i%2==0 ? '#E0F2F1' : '#B2DFDB';
+						$tr.="<tr style='background:".$color."'>";
+						$tr.="<td>".$sol->nombre_perfil."</td>";
+						$tr.="<td>".$sol->cantidad."</td>";
+						$tr.="</tr>";
+
+						$i++;
 
 						$perfil = new Rec_Perfil_Solicitud();
 						$perfil->setId( $sol->perfil );
@@ -602,6 +615,7 @@ try{
 						$perfil->setArea( $sol->area );
 						$perfil->setFechaReq( $sol->fecha );
 						$perfil->setEvaluadorUsrId( $sol->evaluador );
+						$perfil->setNroContrato( $sol->nro_contrato );
 
 						if( ! is_numeric( $sol->sueldo ) )
 								throw new Exception('El sueldo debe ser un valor numérico',1);
@@ -672,6 +686,87 @@ try{
 						throw new Exception( $Usuario->getError() , 1);
 				}
 
+				/*****correo*****/
+
+				$Usuario->setDatos();
+
+				$correo_desde = $Usuario->getEmail();
+
+				$nombre = $Usuario->getNombreCompleto();
+						
+				//$correo_desde = empty($correo_desde)? 'gestop@todoacero.cl' : $correo_desde;
+				
+				$correos = $Usuario->getListaCorreoReclutamientoSolicitud();
+						
+		
+				$body ="Estimado.<br><br> 
+										Se ha registrado una nueva solicitud de reclutamiento bajo el folio Nro.<strong> ".$id_sol."</strong> con el siguiente detalle:";
+		
+
+				$tabla ="<table style='width:700px; border:0; padding:5px 10px '>";
+				$tabla .="<tr>";
+				$tabla .="<td align='center'>";
+				$tabla .="<img src='https://todoacero.cl/images/logo.jpg'/>";
+				$tabla .="</td>";
+				$tabla .="</tr>";
+				$tabla .="<tr>";
+				$tabla .="<td><p>";
+				$tabla .=$body;
+				$tabla .="</p></td></tr>";
+				$tabla .="<tr><td><table style='width:100%;'>"
+						."<thead><tr style='background:#00695C; color:white'><th>Cargo</th><th>Cantidad</th></tr></thead>"
+						."<tbody>".$tr."</tbody>"
+						."</table>";
+
+				$tabla .="</td></tr>"
+						."<tr><td><br><br>Saludos cordiales.<br/><br/>".$nombre."</td></tr>"
+						."</table>";
+								
+
+				$mail = new PHPMailer(TRUE);
+
+				$subject = "Solicitud de reclutamiento";
+
+				$mail->setFrom( 'gestop@todoacero.cl', 'GESTOP' );
+
+				foreach( (array)$correos as $c ){
+									
+								switch($c['tipo']){
+
+								case 'PARA':
+										
+										$mail->addAddress($c['correo'], '');
+										
+										break;
+
+								case 'CC':
+
+										$mail->addCC($c['correo'], '');
+
+										break;
+
+								case 'BCC':
+
+										$mail->addBCC($c['correo'], '');
+
+										break;
+
+								default:
+								
+										$mail->addAddress($c['correo'], '');
+										
+										break;
+								}
+
+				}
+
+				$mail->isHTML(true);
+				$mail->Subject = $subject;
+				$mail->Body = utf8_decode($tabla);
+				$mail->send();
+						
+
+				/****fin correo*****/
 
 				$resp['mensaje'] = 'La solicitud ha sido registrada con el folio '.$id_sol;
 
@@ -969,6 +1064,7 @@ try{
 										'oferta_sueldo'=> $perfil->getSueldo(),
 										'evaluador_nombre'=> $perfil->getEvaluadorNombre(),
 										'evaluador_id'=> $perfil->getEvaluadorUsrId(),
+										'nro_contrato'=> $perfil->getNroContrato(),
 										'competencias' => $comp,
 										'oferta_competencias' => array_column($comp, 'id'),
 										//'oferta_competencias_evaluadas'=> array(),
@@ -1002,7 +1098,15 @@ try{
 				if( empty( $post->oferta ) || !isset( $post->oferta ) )
 
 						throw new Exception("No hay ofertas para procesar" , 1);
+	
 
+				$lista_turnos = $RRHH->getTurnos();
+				
+
+				$Empresa = new Empresa();
+				
+				$lista_faenas = array_map(function($f){ return array('id'=>$f->getId(), 'nombre'=>$f->getNombre() );}, $Empresa->getFaenas() );
+				
 
 				//throw new Exception("veamos los datos",1);
 
@@ -1047,6 +1151,8 @@ try{
 												array(
 														'nombre' => $sol->descripcion,
 														'descripcion' => $sol->oferta_observacion,
+														'oferta_turno' => $sol->oferta_turno,
+														'oferta_faena' => $sol->oferta_faena,
 														'competencias_evaluadas' => $sol->oferta_competencias_evaluadas,
 														'competencias'=> $sol->competencias
 												)
@@ -1182,7 +1288,6 @@ try{
 
 				$array_id = array();
 
-/*
 				foreach( $array_ofertas as $o ){
 						
 						if( $oferta_id = $RRHH->registrarOfertaLaboral( $o ) ){
@@ -1194,11 +1299,11 @@ try{
 						}
 
 				}
- */
 
 				try{
-/*
-	array_push( $array_ofertas['cargos'], 
+				
+						/*
+						array_push( $array_ofertas['cargos'], 
 												array(
 														'nombre' => $sol->descripcion,
 														'descripcion' => $sol->oferta_observacion,
@@ -1206,7 +1311,7 @@ try{
 														'competencias'=> $sol->competencias
 												)
 										);
- */
+						*/
 						if( $publicacion_simple ){
 								
 								$cargos = array();
@@ -1229,12 +1334,30 @@ try{
 												return in_array( $v->id , $eval );
 										}, ARRAY_FILTER_USE_BOTH);
 
-										$array_fb['cargos'][$k]['imagen'] = $RRHH->crearImagenOfertaIndividual( $obj_of['descripcion'], $obj_of['nombre'], array_column($competencias,'titulo') );
+										$turno_id = $obj_of['oferta_turno'];
+
+										$faena_id = $obj_of['oferta_faena'];
+
+										$turno_x = array_filter( (array)$lista_turnos, function($v,$k) use ($turno_id){ return $turno_id==$v['id']; },ARRAY_FILTER_USE_BOTH);
+										$turno_x = array_shift($turno_x);
+										
+										$faena_x = array_filter( (array)$lista_faenas, function($v,$k) use ($faena_id){ return $faena_id==$v['id']; },ARRAY_FILTER_USE_BOTH);
+										$faena_x = array_shift($faena_x);
+
+										$turno_txt = '';
+										$faena_txt = '';
+
+										$turno_txt = (!empty($turno_x) )? $turno_x['descripcion']:'';
+										
+										$faena_txt = (!empty($faena_x) )? $faena_x['nombre']:'';
+
+										//$array_fb['cargos'][$k]['imagen'] = $RRHH->crearImagenOfertaIndividual( $obj_of['descripcion'], $obj_of['nombre'], array_column($competencias,'titulo') );
+									$array_fb['cargos'][$k]['imagen'] = $RRHH->crearImagenOfertaIndividual2($faena_txt, $turno_txt, $obj_of['nombre'], array_column($competencias,'titulo') );
 								
 								}
 
 						}
-
+						
 						$resp['imagenes'] = $array_fb;
 
 					
@@ -1292,6 +1415,12 @@ try{
 										curl_close($ch);
 										
 										$resp['fb'] = $output;
+
+										$ruta_img = __DIR__.'/imagenes/'.$obj_of['imagen'];
+
+										if(file_exists($ruta_img))
+												
+												unlink( $ruta_img );
 								
 								}
 
@@ -1303,7 +1432,6 @@ try{
 				
 				}
 						
-								throw new Exception( 'aaaaahhhhh' , 1);
 
 				if( count($array_id) >1 ){
 						$resp['mensaje'] = 'Las ofertas han sido registradas con los folios :'.implode(', ', $array_id );
@@ -1340,7 +1468,8 @@ try{
 
 					$perfiles = $Usuario->getOfertasLaboralesPublicadas();
 					
-					$resp['ofertas'] = array_map( 
+					if($perfiles)
+						$resp['ofertas'] = array_map( 
 
 							function( $perfil ){
 
@@ -1355,7 +1484,9 @@ try{
 											'area_nombre' =>	$perfil->getAreaNombre()
 									);					
 
-					}, $perfiles );
+						}, $perfiles );
+					else
+						$resp['ofertas']=array();
 
 					$Empresa = new Empresa();
 				
@@ -1390,6 +1521,7 @@ try{
 
 						throw new Exception("Su tiempo de acceso ha expirado", 2);
 				
+				
 
 
 				$sol_id = $post->sol_id;
@@ -1409,9 +1541,23 @@ try{
 				
 				}else{
 						
-						foreach( (array)$cargos_aprobados as $c )
-								$Usuario->cambiarEvaluadorCargoPerfilSolicitud( $c->id , $c->evaluador );
+						$tr ="";
 				
+						$i=0;
+
+						foreach( (array)$cargos_aprobados as $c ){
+						
+								$Usuario->cambiarEvaluadorCargoPerfilSolicitud( $c->id , $c->evaluador );
+								
+								$color= $i%2==0 ? '#E0F2F1' : '#B2DFDB';
+								$tr.="<tr style='background:".$color."'>";
+								$tr.="<td>".$c->descripcion."</td>";
+								$tr.="<td>".$c->cantidad."</td>";
+								$tr.="</tr>";
+
+								$i++;
+						}
+
 						if( ! $Usuario->aprobarSolicitudOfertaLaboralPendiente( $sol_id ) )
 								throw new Exception('Ocurrio un error al intentar aprobar la solicitud',1);
 
@@ -1422,8 +1568,87 @@ try{
 
 						$resp['mensaje'] ="La solicitud fue aprobada";
 
-				}
+		
+						/*****correo*****/
 
+						$Usuario->setDatos();
+						
+						$correo_desde = $Usuario->getEmail();
+					
+						$nombre = $Usuario->getNombreCompleto();
+						
+						$correo_desde = empty($correo_desde)? 'gestop@todoacero.cl' : $correo_desde;
+				
+						$correos = $Usuario->getListaCorreoReclutamientoSolicitudValidacion();
+		
+						
+						$body ="Estimado,<br><br> 
+										Se aprob&oacute; la solicitud de reclutamiento con folio Nro. <strong>".$sol_id."</strong> con los siguientes cargos:<br/>" 
+										."<table style='width:100%;'>"
+										."<thead><tr style='background:#00695C; color:white'>"
+										."<th>Cargo</th><th>Cantidad</th></tr></thead>"
+										."<tbody>".$tr."</tbody>"
+										."</table>"
+										."<br><br>Saludos cordiales.<br/><br/>".$nombre;
+						
+						$tabla ="<table style='width:700px; border:0; padding:5px 10px '>";
+						$tabla .="<tr>";
+						$tabla .="<td align='center'>";
+						$tabla .="<img src='https://todoacero.cl/images/logo.jpg'/>";
+						$tabla .="</td>";
+						$tabla .="</tr>";
+						$tabla .="<tr>";
+						$tabla .="<td><p>";
+						$tabla .=$body;
+						$tabla .="</p></td></tr>";
+						$tabla .="</table>";
+
+						$mail = new PHPMailer(TRUE);
+
+						$subject = "Solicitud de reclutamiento aprobada";
+
+						$mail->setFrom('gestop@todoacero.cl', 'GESTOP' );
+
+						foreach( (array)$correos as $c ){
+									
+								switch($c['tipo']){
+
+								case 'PARA':
+										
+										$mail->addAddress($c['correo'], '');
+										
+										break;
+
+								case 'CC':
+
+										$mail->addCC($c['correo'], '');
+
+										break;
+
+								case 'BCC':
+
+										$mail->addBCC($c['correo'], '');
+
+										break;
+
+								default:
+								
+										$mail->addAddress($c['correo'], '');
+										
+										break;
+								}
+
+						}
+
+						$mail->isHTML(true);
+						$mail->Subject = $subject;
+						$mail->Body = utf8_decode($tabla);
+						$mail->send();
+
+						/****fin correo*****/
+
+
+				}
 				
 				$solicitudes = $Usuario->getSolicitudesPorAprobarOfertaLaboral( $solicitud = null );
 
@@ -1537,7 +1762,6 @@ try{
 						return array(
 								'id'=>$p->getId(), 
 								'nombre'=> $p->getDescripcion(),
-				//				'sueldo'=> $p->getSueldo()
 					 	);
 				}, $RRHH->getPerfilesCargo() );
 
@@ -1595,6 +1819,7 @@ try{
 											'faena_nombre'=>$perfil->getFaenaNombre(),
 											'area_nombre' =>	$perfil->getAreaNombre(),
 										  'solicitante' => $perfil->getSolicitanteNombre(),
+										  'nro_contrato' => $perfil->getNroContrato(),
 											'postulantes' =>$lista,
 									);					
 
@@ -1795,7 +2020,6 @@ try{
 
 				$postulantes = $RRHH->getPostulantesEtapa( null , $reta_id  );
 				
-				//if( $recetatip_id == 3 ){
 				if( $reta_id == 3 ){
 
 						$postulantes = array_map(
@@ -2075,6 +2299,8 @@ try{
 						
 						$enviar_correo = false;
 
+
+
 				}
 
 				if( isset( $post->competencias ) && is_array( $post->competencias ) && !empty( $post->competencias ) ){
@@ -2243,6 +2469,111 @@ try{
 						$mail->send();
 				}
 
+
+					
+						/*****correo*****/
+
+		
+				if(  is_numeric($aprobado) && in_array(intval($tipo), array(1,2) ) ){
+							
+						$obj = new Rec_Postulante();
+						
+						$obj->setId( $postulante_id );
+								
+						$obj->setDatos();
+								
+						$nombre_postulante = $obj->getNombre().' '.$obj->getApaterno().' '.$obj->getAmaterno() ;
+								
+						$Usuario->setDatos();
+						
+						$correo_desde = $Usuario->getEmail();
+
+						$nombre = $Usuario->getNombreCompleto();
+						
+						$correo_desde = empty($correo_desde)? 'gestop@todoacero.cl' : $correo_desde;
+
+						$resultado_apto = (intval($aprobado)===1)?'APTO':'NO APTO';
+								
+						if($tipo == 1){
+												
+								
+								$subject = "Entrevista tecnica aprobada";
+							
+								$body ="Estimado.<br><br> 
+										Se ha realizado la entrevista t&eacute;cnica a <strong>".$nombre_postulante."</strong> para el cargo <strong>".$cargo."</strong>, a quien se le considera <strong>".$resultado_apto."</strong>." 
+										."<br><br>Saludos cordiales.<br/><br/>".$nombre;
+								
+								$correos = $Usuario->getListaCorreoPostulanteApruebaEntrevistaTecnica();
+
+						}elseif( $tipo == 2 ){
+
+								$subject = "Examenes preocupacionales aprobados";
+	
+								$body ="Estimado,<br><br> 
+										Seg&uacute;n los examenes preocupacionales de <strong>".$nombre_postulante."</strong> se considera <strong>".$resultado_apto."</strong> para el cargo de <strong>".$cargo."</strong>" 
+										."<br><br>Saludos cordiales.<br/><br/>".$nombre;
+								
+								$correos = $Usuario->getListaCorreoPostulanteApruebaExamenPreocupacional();
+
+						}		
+
+						$tabla ="<table style='width:700px; border:0; padding:5px 10px '>";
+						$tabla .="<tr>";
+						$tabla .="<td align='center'>";
+						$tabla .="<img src='https://todoacero.cl/images/logo.jpg'/>";
+						$tabla .="</td>";
+						$tabla .="</tr>";
+						$tabla .="<tr>";
+						$tabla .="<td><p>";
+						$tabla .=$body;
+						$tabla .="</p></td></tr>";
+						$tabla .="</table>";
+
+						$mail = new PHPMailer(TRUE);
+
+
+						$mail->setFrom('gestop@todoacero.cl', 'GESTOP' );
+
+						foreach( (array)$correos as $c ){
+									
+								switch($c['tipo']){
+
+								case 'PARA':
+										
+										$mail->addAddress($c['correo'], '');
+										
+										break;
+
+								case 'CC':
+
+										$mail->addCC($c['correo'], '');
+
+										break;
+
+								case 'BCC':
+
+										$mail->addBCC($c['correo'], '');
+
+										break;
+
+								default:
+								
+										$mail->addAddress($c['correo'], '');
+										
+										break;
+								}
+
+						}
+
+						$mail->isHTML(true);
+						$mail->Subject = $subject;
+						$mail->Body = utf8_decode($tabla);
+						$mail->send();
+
+				}
+				
+				/****fin correo*****/
+
 				break;
 			
 			case 'reclutamiento_guardar_subetapa_postulante':
@@ -2369,7 +2700,7 @@ try{
 
 				if( !isset($post->postulantes) || !is_array( $post->postulantes ) || empty($post->postulantes) )
 						throw new Exception("El listado de postulantes esta vacio");
-
+				
 				
 				$postulantes = $post->postulantes;
 
@@ -2377,6 +2708,9 @@ try{
 				
 				$aprobado = null;
 
+				$aprobados = '';
+
+				$i=0;
 
 				foreach( (array)$postulantes as $p ){
 						
@@ -2388,7 +2722,110 @@ try{
 						$reta_id = $p->etapa_id;
 
 						$Usuario->registrarEtapaExternaPostulante( $post_id, $rocp_id, $reta_id , $puntaje=100, $aprobado=1 );
+
+						if($reta_id==8){
+				
+					
+								$color= $i%2==0 ? '#E0F2F1' : '#B2DFDB';
+		
+								$nombre = $p->nombre.' '.$p->apaterno.' '.$p->amaterno ;
+
+								$aprobados.="<tr style='background:".$color.";padding:20px'><td>".$nombre."</td>";
+
+								$aprobados.="<td>".$p->perfil_nombre."</td></tr>";
+								
+								$i++;
+
+						}
+
+
 				}
+
+						/*****correo*****/
+
+		
+				if( !empty( $aprobados) ){
+							
+						$Usuario->setDatos();
+						
+						$correo_desde = $Usuario->getEmail();
+
+						$nombre = $Usuario->getNombreCompleto();
+						
+						$correo_desde = empty($correo_desde)? 'gestop@todoacero.cl' : $correo_desde;
+
+						$subject = "Etapa de contrato aprobada";
+				
+						$body ="Estimado,<br><br> 
+										Los siguientes postulantes han completado la etapa de contrato.";
+						$body.="<table style='width:100%;border:0; padding:5px 10px '>"
+								."<thead>
+								<tr style='background:#00695C; color:white'><th>NOMBRE</th>"
+								."<th>CARGO</th></tr></thead>";
+						$body.="<tbody>".$aprobados."</tbody>";
+						$body.="</table>";
+						$body.="<br><br>Saludos cordiales.<br/><br/>".$nombre;
+						
+								
+						$correos = $Usuario->getListaCorreoPostulanteApruebaContrato();
+
+						$tabla ="<table style='width:700px; border:0; padding:5px 10px '>";
+						$tabla .="<tr>";
+						$tabla .="<td align='center'>";
+						$tabla .="<img src='https://todoacero.cl/images/logo.jpg'/>";
+						$tabla .="</td>";
+						$tabla .="</tr>";
+						$tabla .="<tr>";
+						$tabla .="<td><p>";
+						$tabla .=$body;
+						$tabla .="</p></td></tr>";
+						$tabla .="</table>";
+
+						$mail = new PHPMailer(TRUE);
+
+
+						$mail->setFrom('gestop@todoacero.cl', 'GESTOP' );
+
+						foreach( (array)$correos as $c ){
+									
+								switch($c['tipo']){
+
+								case 'PARA':
+										
+										$mail->addAddress($c['correo'], '');
+										
+										break;
+
+								case 'CC':
+
+										$mail->addCC($c['correo'], '');
+
+										break;
+
+								case 'BCC':
+
+										$mail->addBCC($c['correo'], '');
+
+										break;
+
+								default:
+								
+										$mail->addAddress($c['correo'], '');
+										
+										break;
+								}
+
+						}
+
+						$mail->isHTML(true);
+						$mail->Subject = $subject;
+						$mail->Body = utf8_decode($tabla);
+						$mail->send();
+
+				}
+				
+				/****fin correo*****/
+
 
 				
 				break;
@@ -2408,6 +2845,17 @@ try{
 
 				if( !isset($post->postulantes) || !is_array( $post->postulantes ) || empty($post->postulantes) )
 						throw new Exception("El listado de postulantes esta vacio");
+
+
+				$Usuario->setDatos();
+
+				$correo_desde = $Usuario->getEmail();
+
+				$nombre = $Usuario->getNombreCompleto();
+						
+				
+				$correo_desde = empty($correo_desde)? 'gestop@todoacero.cl' : $correo_desde;
+
 
 				$postulantes = $post->postulantes;
 
@@ -2475,6 +2923,12 @@ try{
 
 				}
 
+				$tabla .="<tr>";
+				$tabla .="<td>";
+				$tabla .="<br/>Saludos cordiales.<br/><br/>".$nombre;
+				$tabla .="</td></tr>";
+
+
 				$tabla .="</tbody>";
 				$tabla .="</table>";
 				
@@ -2493,7 +2947,7 @@ try{
 
 						$mail = new PHPMailer(TRUE);
 			
-						$mail->setFrom("gestop@todoacero.cl", 'Gestop ERP');
+						$mail->setFrom( $correo_desde, $nombre );
 
 						foreach((array)$post->correos as $correo ){
 								$mail->addAddress($correo, '');
@@ -4010,7 +4464,7 @@ try{
 				header("Content-type: application/octet-stream");
 				
 				header("Content-disposition: attachment; filename=documentos.zip");
-				
+
 				readfile( $ruta_zip );
 				
 				unlink( $ruta_zip );
@@ -4043,4 +4497,3 @@ try{
 echo json_encode($resp);
 
 ?>
-

@@ -1,0 +1,8 @@
+host ftp.todoacero.cl
+user admin
+pass ()m.t.z.a&T0d04cer0*
+port 21
+remote /home/admin/public_html/gestop_backend_desarrollo/
+confirm_download 0
+confirm_upload 0
+

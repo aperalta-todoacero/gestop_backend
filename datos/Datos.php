@@ -725,20 +725,21 @@ public function registrarSolicitudCargo( $pESTADO_ID, $pDESCRIPCION, $pFECHA, $p
 	
 	}
 
-  public function registrarSolicitudCargoDetalle($pPERF_ID, $pSOL_ID, $pTUR_ID,$pOBSERVACION, $pESTADO, $pCANTIDAD, $pFA_ID, $pAREA_ID, $pFECHA, $pSUELDO, $pEVALUADOR_ID )
+  public function registrarSolicitudCargoDetalle($pPERF_ID, $pSOL_ID, $pTUR_ID,$pOBSERVACION, $pESTADO, $pCANTIDAD, $pFA_ID, $pAREA_ID, $pFECHA, $pSUELDO, $pNRO_CONTRATO,$pEVALUADOR_ID )
   {
-    $r = $this->procedure("CALL RECLUTAMIENTO_GUARDAR_SOLICITUD_DETALLE(:pPERF_ID, :pSOL_ID, :pTUR_ID,:pOBSERVACION, :pESTADO, :pCANTIDAD, :pFA_ID, :pAREA_ID, :pFECHA, :pSUELDO, :pEVALUADOR_ID )",
+    $r = $this->procedure("CALL RECLUTAMIENTO_GUARDAR_SOLICITUD_DETALLE(:pPERF_ID, :pSOL_ID, :pTUR_ID,:pOBSERVACION, :pESTADO, :pCANTIDAD, :pFA_ID, :pAREA_ID, :pFECHA, :pSUELDO, :pNRO_CONTRATO, :pEVALUADOR_ID )",
             array(
               ':pPERF_ID' => $pPERF_ID,
               ':pSOL_ID' => $pSOL_ID,
               ':pTUR_ID' => $pTUR_ID,
               ':pOBSERVACION' => $pOBSERVACION,
               ':pESTADO' => $pESTADO,
-							':pCANTIDAD' => $pCANTIDAD,
-							':pFA_ID'=> $pFA_ID,
+				':pCANTIDAD' => $pCANTIDAD,
+			  ':pFA_ID'=> $pFA_ID,
 							':pAREA_ID' => $pAREA_ID,
 							':pFECHA' => $pFECHA,
 							':pSUELDO' => $pSUELDO,
+              ':pNRO_CONTRATO' => $pNRO_CONTRATO,
 						  ':pEVALUADOR_ID' => $pEVALUADOR_ID
 						) 
 		);
@@ -1270,7 +1271,6 @@ public function registrarSolicitudCargo( $pESTADO_ID, $pDESCRIPCION, $pFECHA, $p
 
 	}
 	
-	//public function getListaPostulantes( $pROCP_ID = null, $pRECETATIP_ID = null )
 	public function getListaPostulantes( $pROCP_ID = null, $pRETA_ID = null, $pUSR_ID=null )
 	{
 
@@ -1765,6 +1765,15 @@ public function registrarSolicitudCargo( $pESTADO_ID, $pDESCRIPCION, $pFECHA, $p
 						':pRUT' => $pRUT,
 						':pTURNO' => $pTURNO,
 						':pFECHA' => $pFECHA,
+				)
+		);
+	}
+
+	public function getPostulacionCorreosInteresados(  $pROCP_ID )
+  {
+		return  $this->procedure("CALL POSTULANTE_CORREOS_NUEVA_POSTULACION( :pROCP_ID )",
+				array( 
+						':pROCP_ID' => $pROCP_ID,
 				)
 		);
 	}

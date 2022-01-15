@@ -41,6 +41,8 @@ class Rec_Perfil_Solicitud extends Rec_Perfil
 
 		private $evaluador_nombre;
 
+		private $nro_contrato;
+
 
 		public function __construct(){
 
@@ -49,90 +51,8 @@ class Rec_Perfil_Solicitud extends Rec_Perfil
 		}
 
 		/************* GETTERS ********************/
-/*
-		public function getId(){
-				return $this->id;
-		}
 
-		public function getTitulo(){
-				return $this->titulo;
-		}
 
-		public function getCantidad(){
-				return $this->cantidad;
-		}
-
-		public function getDescripcion(){
-				return $this->descripcion;
-		}
-		public function getObservacion(){
-				return $this->observacion;
-		}
-
-		public function getCompetencias(){
-				return $this->competencias;
-		}
-
-		public function getDocumentos(){
-				return $this->documentos;
-		}
- */
-		/*********** SETTERS ************/
-/*
-		public function setId( $id ){
-				$this->id = $id;
-		}
-
-		public function setTitulo( $titulo ){
-				$this->titulo = $titulo;
-		}
-
-		public function setCantidad( $cantidad ){
-				$this->cantidad = $cantidad;
-		}
-
-		public function setDescripcion( $descripcion ){
-				$this->descripcion = $descripcion;
-		}
-
-		public function setObservacion( $observacion ){
-				$this->observacion = $observacion;
-		}
- 
-		public function addCompetencia( $competencia ){
-		
-				if( $competencia instanceof Rec_Competencia ){
-
-						if( empty( $this->competencias ) )
-								$this->competencias = array();
-
-						array_push( $this->competencias, $competencia );
-						
-						return true;
-
-				}
-				else{
-						return false;
-				}
-
-		}
-
-		public function addDocumento( $documento ){
-
-				if( $documento instanceof Rec_Documento ){
-
-						if( empty( $this->documentos ) )
-								$this->documentos = array();
-
-						array_push( $this->documentos, $documento );
-
-						return true;
-				}
-				else{
-						return false;
-				}
-		}
- */
 		public function getTipoId(){
 				return $this->tipo_id;
 		}
@@ -176,6 +96,11 @@ class Rec_Perfil_Solicitud extends Rec_Perfil
 		public function getEvaluadorNombre(){
 				return $this->evaluador_nombre;
 		}
+
+		public function getNroContrato(){
+				return $this->nro_contrato;
+		}
+
 		/*************** setters **********/
 
 		public function setTipoId( $tipo ){
@@ -215,6 +140,10 @@ class Rec_Perfil_Solicitud extends Rec_Perfil
 		
 		public function setEvaluadorNombre( $nombre ){
 				$this->evaluador_nombre = $nombre;
+		}
+
+		public function setNroContrato( $nro_contrato ){
+				$this->nro_contrato = $nro_contrato;
 		}
 		
 		public function setCompetencias( ){
